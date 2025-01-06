@@ -1,9 +1,0 @@
-{
-  "orders":[
-    {
-      "id": 0,
-      "buyer": "SomeOne",
-      "item": "Something"
-    }
-  ]
-}
