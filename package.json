@@ -2,10 +2,9 @@
   "name": "craftshop-orders",
   "version": "1.0.0",
   "main": "index.js",
-"scripts": {
+  "scripts": {
     "start": "json-server --watch db.json --port 3000"
-},
-
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AscendancyYT/craftshop-orders.git"
