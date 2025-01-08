@@ -1,112 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Заказы</title>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    table { width: 100%; border-collapse: collapse; margin: 20px auto; max-width: 800px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background-color: #f4f4f4; }
-    caption { font-size: 1.5em; margin-bottom: 10px; }
-    .form-container { max-width: 800px; margin: 20px auto; text-align: center; }
-    input[type="text"] { padding: 10px; width: 200px; margin-right: 10px; }
-    button { padding: 10px 20px; }
-  </style>
-</head>
-<body>
-  <table id="ordersTable">
-    <caption>Заказы CraftShop</caption>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Имя покупателя</th>
-        <th>Товар</th>
-        <th>Телеграм</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Данные будут добавляться здесь -->
-    </tbody>
-  </table>
-
-  <div class="form-container">
-    <h2>Удалить заказ</h2>
-    <input type="text" id="deleteId" placeholder="Введите ID заказа">
-    <button id="deleteButton">Удалить</button>
-    <p id="deleteMessage" style="color: red; margin-top: 10px;"></p>
-  </div>
-
-  <script>
-    const API_URL = 'https://flax-swift-patio.glitch.me/orders'; // URL API
-
-    // Функция добавления данных в таблицу
-    function addOrderToTable(order) {
-      const tableBody = document.querySelector('#ordersTable tbody');
-
-      // Проверяем, чтобы в таблице было не больше 50 строк
-      while (tableBody.rows.length >= 50) {
-        tableBody.deleteRow(tableBody.rows.length - 1);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <title>Заказы</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px auto;
+        max-width: 800px;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: left;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+      caption {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+      }
+      .form-container {
+        max-width: 800px;
+        margin: 20px auto;
+        text-align: center;
+      }
+      input[type="text"] {
+        padding: 10px;
+        width: 200px;
+        margin-right: 10px;
+      }
+      button {
+        padding: 10px 20px;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
       }
 
-      // Создаём новую строку
-      const row = tableBody.insertRow(0); // Вставляем в начало таблицы
-
-      // Заполняем ячейки
-      row.insertCell(0).textContent = order.id || '-';
-      row.insertCell(1).textContent = order.buyer || '-';
-      row.insertCell(2).textContent = order.product || '-';
-      row.insertCell(3).textContent = order.telegram || '-';
-    }
-
-    // Функция загрузки данных из API
-    async function fetchOrders() {
-      try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Ошибка при загрузке данных');
-        const data = await response.json();
-
-        // Очищаем таблицу перед обновлением
-        const tableBody = document.querySelector('#ordersTable tbody');
-        tableBody.innerHTML = '';
-
-        // Добавляем каждый заказ в таблицу
-        data.forEach(order => addOrderToTable(order));
-      } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
+      body {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f4f7ff;
+        overflow: hidden;
+        flex-direction: column;
       }
-    }
 
-    // Функция удаления элемента по ID
-    async function deleteOrderById(id) {
-      try {
-        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.ok) {
-          document.getElementById('deleteMessage').textContent = `Заказ с ID ${id} успешно удалён!`;
-          fetchOrders(); // Обновляем таблицу после удаления
-        } else {
-          throw new Error(`Не удалось удалить заказ с ID ${id}`);
+      .toast {
+        position: absolute;
+        top: 25px;
+        right: 30px;
+        border-radius: 12px;
+        background: #fff;
+        padding: 20px 35px 20px 25px;
+        box-shadow: 0 6px 20px -5px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transform: translateX(calc(100% + 30px));
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.35);
+      }
+
+      .toast.active {
+        transform: translateX(0%);
+      }
+
+      .toast .toast-content {
+        display: flex;
+        align-items: center;
+      }
+
+      .toast-content .check {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 35px;
+        min-width: 35px;
+        background-color: #4070f4;
+        color: #fff;
+        font-size: 20px;
+        border-radius: 50%;
+      }
+
+      .toast-content .message {
+        display: flex;
+        flex-direction: column;
+        margin: 0 20px;
+      }
+
+      .message .text {
+        font-size: 16px;
+        font-weight: 400;
+        color: #666666;
+      }
+
+      .message .text.text-1 {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .toast .close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        padding: 5px;
+        cursor: pointer;
+        opacity: 0.7;
+      }
+
+      .toast .close:hover {
+        opacity: 1;
+      }
+
+      .toast .progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        width: 100%;
+      }
+
+      .toast .progress:before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #4070f4;
+      }
+
+      .progress.active:before {
+        animation: progress 5s linear forwards;
+      }
+
+      @keyframes progress {
+        100% {
+          right: 100%;
         }
-      } catch (error) {
-        console.error('Ошибка удаления:', error);
-        document.getElementById('deleteMessage').textContent = `Ошибка: ${error.message}`;
       }
-    }
 
-    // Обработчик для кнопки удаления
-    document.getElementById('deleteButton').addEventListener('click', () => {
-      const deleteId = document.getElementById('deleteId').value.trim();
-      if (deleteId) {
-        deleteOrderById(deleteId);
-      } else {
-        document.getElementById('deleteMessage').textContent = 'Пожалуйста, введите ID!';
+      button {
+        padding: 12px 20px;
+        font-size: 20px;
+        outline: none;
+        border: none;
+        background-color: #4070f4;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.3s;
       }
-    });
 
-    // Обновляем таблицу каждые 10 секунд
-    setInterval(fetchOrders, 10000);
-    fetchOrders();
-  </script>
-</body>
+      button:hover {
+        background-color: #0e4bf1;
+      }
+
+      .toast.active ~ button {
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <table id="ordersTable">
+      <caption>
+        Заказы CraftShop
+      </caption>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Имя покупателя</th>
+          <th>Товар</th>
+          <th>Телеграм</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Данные будут добавляться здесь -->
+      </tbody>
+    </table>
+
+    <div class="form-container">
+      <h2>Удалить заказ</h2>
+      <input type="text" id="deleteId" placeholder="Введите ID заказа" />
+      <button id="deleteButton">Удалить</button>
+      <p id="deleteMessage" style="color: red; margin-top: 10px"></p>
+    </div>
+
+    <div class="toast">
+      <div class="toast-content">
+        <i class="bx bxs-error"></i>
+
+        <div class="message">
+          <span class="text text-1">Что-то пошло не так.</span>
+          <span class="text text-2"></span>
+        </div>
+      </div>
+      <i class="fa-solid fa-xmark close"></i>
+
+      <div class="progress"></div>
+    </div>
+
+    <script>
+      toast = document.querySelector(".toast");
+      progress = document.querySelector(".progress");
+
+      let timer1, timer2;
+      const API_URL = "https://flax-swift-patio.glitch.me/orders"; // URL API
+
+      // Функция добавления данных в таблицу
+      function addOrderToTable(order) {
+        const tableBody = document.querySelector("#ordersTable tbody");
+
+        // Проверяем, чтобы в таблице было не больше 50 строк
+        while (tableBody.rows.length >= 50) {
+          tableBody.deleteRow(tableBody.rows.length - 1);
+        }
+
+        // Создаём новую строку
+        const row = tableBody.insertRow(0); // Вставляем в начало таблицы
+
+        // Заполняем ячейки
+        row.insertCell(0).textContent = order.id || "-";
+        row.insertCell(1).textContent = order.buyer || "-";
+        row.insertCell(2).textContent = order.product || "-";
+        row.insertCell(3).textContent = order.telegram || "-";
+      }
+
+      // Функция загрузки данных из API
+      async function fetchOrders() {
+        try {
+          const response = await fetch(API_URL);
+          if (!response.ok) throw new Error("Ошибка при загрузке данных");
+          const data = await response.json();
+
+          // Очищаем таблицу перед обновлением
+          const tableBody = document.querySelector("#ordersTable tbody");
+          tableBody.innerHTML = "";
+
+          // Добавляем каждый заказ в таблицу
+          data.forEach((order) => addOrderToTable(order));
+        } catch (error) {
+          toast.classList.add("active");
+          progress.classList.add("active");
+
+          timer1 = setTimeout(() => {
+            toast.classList.remove("active");
+          }, 5000); //1s = 1000 milliseconds
+
+          timer2 = setTimeout(() => {
+            progress.classList.remove("active");
+          }, 5300);
+        }
+      }
+
+      // Функция удаления элемента по ID
+      async function deleteOrderById(id) {
+        try {
+          const response = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            document.getElementById(
+              "deleteMessage"
+            ).textContent = `Заказ с ID ${id} успешно удалён!`;
+            fetchOrders(); // Обновляем таблицу после удаления
+          } else {
+            throw new Error(`Не удалось удалить заказ с ID ${id}`);
+          }
+        } catch (error) {
+          toast.classList.add("active");
+          progress.classList.add("active");
+
+          timer1 = setTimeout(() => {
+            toast.classList.remove("active");
+          }, 5000); //1s = 1000 milliseconds
+
+          timer2 = setTimeout(() => {
+            progress.classList.remove("active");
+          }, 5300);
+        }
+      }
+
+      // Обработчик для кнопки удаления
+      document.getElementById("deleteButton").addEventListener("click", () => {
+        const deleteId = document.getElementById("deleteId").value.trim();
+        if (deleteId) {
+          deleteOrderById(deleteId);
+        } else {
+          document.getElementById("deleteMessage").textContent =
+            "Пожалуйста, введите ID!";
+        }
+      });
+
+      // Обновляем таблицу каждые 10 секунд
+      setInterval(fetchOrders, 10000);
+      fetchOrders();
+    </script>
+  </body>
 </html>
