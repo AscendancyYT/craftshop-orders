@@ -23,6 +23,13 @@ function addOrderToTable(order) {
   row.insertCell(3).textContent = order.telegram || "-";
 }
 
+// Функция рендеринга таблицы
+function renderTable(filteredOrders) {
+  const tableBody = document.querySelector("#ordersTable tbody");
+  tableBody.innerHTML = ""; // Очищаем таблицу перед рендерингом
+  filteredOrders.forEach((order) => addOrderToTable(order));
+}
+
 // Функция загрузки данных из API
 async function fetchOrders() {
   try {
@@ -34,8 +41,11 @@ async function fetchOrders() {
     const tableBody = document.querySelector("#ordersTable tbody");
     tableBody.innerHTML = "";
 
+    // Сохраняем данные для фильтрации
+    window.orders = data;
+
     // Добавляем каждый заказ в таблицу
-    data.forEach((order) => addOrderToTable(order));
+    renderTable(data);
   } catch (error) {
     toast.classList.add("active");
     progress.classList.add("active");
@@ -87,6 +97,17 @@ document.getElementById("deleteButton").addEventListener("click", () => {
     document.getElementById("deleteMessage").textContent =
       "Пожалуйста, введите ID!";
   }
+});
+
+// Обработчик для поля поиска
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  const searchValue = e.target.value.toLowerCase();
+  const filteredOrders = window.orders.filter((order) =>
+    Object.values(order).some((field) =>
+      field.toLowerCase().includes(searchValue)
+    )
+  );
+  renderTable(filteredOrders);
 });
 
 // Обновляем таблицу каждые 10 секунд
